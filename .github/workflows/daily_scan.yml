@@ -1,0 +1,26 @@
+name: Gunluk Tarama
+on:
+  schedule:
+    - cron: '0 16 * * *' # TSİ 19:00 (UTC 16:00)
+  workflow_dispatch: # Manuel çalıştırma butonu ekler
+
+jobs:
+  run_scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu Cek
+        uses: actions/checkout@v3
+
+      - name: Python Kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Kutuphaneleri Yukle
+        run: pip install yfinance pandas numpy python-telegram-bot
+
+      - name: Analizi Baslat
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
+        run: python main.py
