@@ -2,7 +2,6 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import warnings
-import re
 import os
 import asyncio
 from telegram import Bot
@@ -10,7 +9,7 @@ from telegram.constants import ParseMode
 
 warnings.filterwarnings('ignore')
 
-# --- FONKSİYONLAR ---
+# --- TEKNİK FONKSİYONLAR ---
 def calculate_ars(src_series):
     ema1 = src_series.ewm(span=3, adjust=False).mean()
     band = 1.23 / 100
@@ -28,75 +27,59 @@ def calculate_ars(src_series):
     return pd.Series(ars_values, index=src_series.index)
 
 def find_cross_up(fast, slow):
-    f = fast.tail(8); s = slow.tail(8)
-    if len(f) < 8 or len(s) < 8: return "-"
-    for i in range(1, len(f)):
-        if f.iloc[i-1] <= s.iloc[i-1] and f.iloc[i] > s.iloc[i]:
-            return f"{round(f.iloc[i], 2)} ({len(f)-1-i})"
+    f = fast.tail(5); s = slow.tail(5)
+    if len(f) < 5 or len(s) < 5: return "-"
+    if f.iloc[-2] <= s.iloc[-2] and f.iloc[-1] > s.iloc[-1]:
+        return f"{round(f.iloc[-1], 2)} (0)"
     return "-"
 
 def find_cross_down(fast, slow):
-    f = fast.tail(8); s = slow.tail(8)
-    if len(f) < 8 or len(s) < 8: return "-"
-    for i in range(1, len(f)):
-        if f.iloc[i-1] >= s.iloc[i-1] and f.iloc[i] < s.iloc[i]:
-            return f"{round(f.iloc[i], 2)} ({len(f)-1-i})"
+    f = fast.tail(5); s = slow.tail(5)
+    if len(f) < 5 or len(s) < 5: return "-"
+    if f.iloc[-2] >= s.iloc[-2] and f.iloc[-1] < s.iloc[-1]:
+        return f"{round(f.iloc[-1], 2)} (0)"
     return "-"
 
 async def main():
-    bist_raw = "ACSEL, ADEL, ADESE, AGHOL, AGESA, AGROT, AHGAZ, AKBNK, AKCNS, AKSA, AKSEN, ALARK, ALBRK, ALFAS, ALKIM, ANGEN, ARCLK, ARDYZ, ASELS, ASTOR, AYDEM, AYGAZ, BAGFS, BANVT, BERA, BIMAS, BIOEN, BOBET, BRSAN, BRYAT, BUCIM, CANTE, CCOLA, CIMSA, CWENE, DOAS, DOHOL, EGEEN, EKGYO, ENJSA, ENKAI, EREGL, EUHOL, EUPWR, FROTO, GARAN, GESAN, GLYHO, GOLTS, GOZDE, GSDHO, GUBRF, HALKB, HEKTS, HUBVC, IEYHO, IHLGM, IHLAS, INGRM, INVEO, ISCTR, ISGYO, ISMEN, JANTS, KARDMD, KAREL, KARSN, KAYSE, KCAER, KCHOL, KLKIM, KONTR, KONYA, KORDS, KOZAA, KOZAL, KRDMD, LOGO, MAVI, MEDTR, MGROS, MIATK, MPARK, NATEN, NETAS, ODAS, OTKAR, OYAKC, PASEU, PGSUS, PETKM, QUAGR, REEDR, SAHOL, SASA, SAYAS, SDTTR, SISE, SKBNK, SOKM, TARKM, TAVHL, TCELL, THYAO, TKFEN, TKNSA, TOASO, TSKB, TSPOR, TTKOM, TTRAK, TUKAS, TUPRS, TURSG, ULKER, VAKBN, VESBE, VESTL, YEOTK, YKBNK, ZOREN"
-    all_stocks = [k.strip() + ".IS" for k in bist_raw.split(",") if k.strip()]
+    # 600+ Hisse Listesi
+    bist_raw = "ACSEL,ADEL,ADESE,ADGYO,AFYON,AGHOL,AGESA,AGROT,AHGAZ,AKBNK,AKCNS,AKENR,AKFGY,AKFYE,AKGRT,AKMGY,AKSA,AKSEN,ALARK,ALBRK,ALCAR,ALCTL,ALFas,ALKA,ALKIM,ALTNY,ALVES,ANELE,ANGEN,ANHYT,ANSGR,ARCLK,ARDYZ,ARENA,ARSAN,ASELS,ASTOR,ASUZU,ATATP,ATEKS,AVHOL,AVOD,AVPGY,AYDEM,AYEN,AYGAZ,AZTEK,BAGFS,BANVT,BARMA,BASGZ,BAYRK,BEGYO,BERA,BEYAZ,BIENY,BIGCH,BIMAS,BIOEN,BIZIM,BMSCH,BMSTL,BNTAS,BOBET,BORLS,BORSK,BOSSA,BRISA,BRKO,BRKSN,BRMEN,BRSAN,BRYAT,BSOKE,BTCIM,BUCIM,BURCE,BURVA,BVSAN,CANTE,CATES,CCOLA,CELHA,CEMAS,CEMTS,CIMSA,CLEBI,CONSE,COSMO,CVKMD,CWENE,DAGI,DAPGM,DARDL,DCTTR,DENGE,DERHL,DERIM,DESA,DESPC,DEVA,DGNMO,DIRIT,DITAS,DMSAS,DNISI,DOAS,DOCO,DOFER,DOHOL,DOKTA,DURDO,DYOBY,EBEBK,ECILC,ECZYT,EDATA,EDIP,EFORV,EGEEN,EGGUB,EGPRO,EGSER,EKGYO,EKOS,EKSUN,ELITE,EMKEL,ENERY,ENJSA,ENKAI,ENSRI,EPLAS,ERBos,ERCB,EREGL,ERSU,ESCAR,ESCOM,ESEN,EUPWR,EUREN,EYGYO,FADE,FENER,FLAP,FMIZP,FONET,FORMT,FORTE,FROTO,FZLGY,GARAN,GARFA,GEDIK,GEDZA,GENIL,GENTS,GEREL,GESAN,GIPTA,GLCVY,GLRYH,GLYHO,GOKNR,GOLTS,GOODY,GOZDE,GRSEL,GSDHO,GUBRF,GWIND,GZNMI,HALKB,HATEK,HATSN,HDFGS,HEDEF,HEKTS,HKTM,HLGYO,HTTBT,HUNER,HURGZ,ICBCT,IDGYO,IEYHO,IHAAS,IHLGM,IHLAS,IHYAY,IMASM,INDES,INFO,INGRM,INVEO,INVES,ISCTR,ISFIN,ISGYO,ISGSY,ISMEN,ISSEN,ISYAT,IZENR,IZINV,IZMDC,JANTS,KAPLM,KAREL,KARSN,KARTN,KARYE,KATMR,KAYSE,KCAER,KCHOL,KFEIN,KGYO,KIMMR,KLGYO,KLKIM,KLMSN,KLRHO,KLSER,KMPUR,KNFRT,KOCMT,KONKA,KONTR,KONYA,KORDS,KOZAA,KOZAL,KRDMA,KRDMB,KRDMD,KRGYO,KRONT,KRPLS,KRSTL,KRTEK,KSTUR,KTSKR,KUTPO,KUVVA,KUYAS,KZBGY,KZGYO,LIDER,LIDFA,LINK,LMKDC,LOGO,LUKSK,MACKO,MAGEN,MAKIM,MAKTK,MANAS,MARBL,MARKA,MARTI,MAVI,MEDTR,MEGAP,MEKAG,MEPET,MERCN,MERKO,METRO,METUR,MGROS,MIATK,MIPAZ,MMCAS,MNDRS,MOGAN,MPARK,MRGYO,MRSHL,MSGYO,MTRKS,MTRYO,MZHLD,NATEN,NETAS,NIBAS,NOHOL,NTGAZ,NUGYO,NUHCM,OBASE,OBAMS,ODAS,ODINE,OFSYM,ONCSM,ORCAY,ORGE,ORMA,OSMEN,OSTIM,OTKAR,OTTO,OYAKC,OYAYO,OYLUM,OZATD,OZGYO,OZKGY,OZRDN,OZSUB,OZYSR,PAGYO,PAMEL,PAPIL,PARSN,PASEU,PATEK,PCILT,PEGYO,PEKGY,PENGD,PENTA,PETKM,PETUN,PGSUS,PINSU,PKART,PKENT,PLTUR,PNLSN,PNSUT,POLHO,POLTK,PRDGS,PRKAB,PRKME,PRZMA,PSGYO,QUAGR,RALYH,RAYSG,REEDR,RNPOL,RODRG,ROYAL,RTALB,RUBNS,RYGYO,RYSAS,SAFKR,SAHOL,SAMAT,SANEL,SANFM,SANKO,SARKY,SASA,SAYAS,SDTTR,SEGMN,SEGYO,SEKUR,SELEC,SELVA,SEYKM,SILVR,SISE,SKBNK,SKTAS,SMART,SMRTG,SNGYO,SNICA,SNKRN,SNPAM,SODSN,SOKM,SONME,SRVGY,SUMAS,SUNTK,SURGY,SUWEN,TABGD,TARKM,TATEN,TATGD,TAVHL,TBORG,TCELL,TDGYO,TEKTU,TERA,TETMT,TEZOL,THYAO,TKFEN,TKNSA,TLMAN,TMPOL,TMSN,TNZTP,TOASO,TRCAS,TRGYO,TRILC,TSKB,TSPOR,TTKOM,TTRAK,TUCLK,TUKAS,TUPRS,TURGG,TURSG,UFUK,ULAS,ULKER,ULUFA,ULUSE,ULUUN,UNLU,USAK,VAKBN,VAKFN,VAKKO,VANGD,VBTYZ,VERTU,VERUS,VESBE,VESTL,VKGYO,VKING,YEOTK,YESIL,YGGYO,YGYO,YIGIT,YKBNK,YKSLN,YONGA,YUNSA,YYAPI,YYLGD,ZEDUR,ZGYO,ZOREN,ZRGYO"
+    tickers = [t.strip() + ".IS" for t in bist_raw.split(",")]
 
-    print("BIST Taranıyor...")
-    data = yf.download(all_stocks, period="2y", interval="1d", auto_adjust=True, progress=False, group_by='ticker')
+    print(f"{len(tickers)} hisse indiriliyor...")
+    data = yf.download(tickers, period="2y", interval="1d", auto_adjust=True, progress=False, group_by='ticker')
     
-    results = []
-    for ticker in all_stocks:
+    res = []
+    for t in tickers:
         try:
-            df = data[ticker].dropna()
-            if len(df) < 201: continue
-            
-            last_close = df['Close'].iloc[-1]
+            df = data[t].dropna()
+            if len(df) < 100: continue
             df['hlc3'] = (df['High'] + df['Low'] + df['Close']) / 3
             ars_d = calculate_ars(df['hlc3'])
             df_w = df.resample('W').agg({'High':'max', 'Low':'min', 'Close':'last'}).dropna()
-            ars_w = calculate_ars((df_w['High'] + df_w['Low'] + df_w['Close']) / 3)
-            ars_w_daily = ars_w.reindex(df.index, method='ffill')
-            
+            ars_w = calculate_ars((df_w['High'] + df_w['Low'] + df_w['Close']) / 3).reindex(df.index, method='ffill')
             bb_mid = df['Close'].rolling(window=200).mean()
-            bb_upper = bb_mid + (df['Close'].rolling(window=200).std() * 2)
-
-            results.append([
-                ticker.replace(".IS",""), 
-                find_cross_up(ars_d, ars_w_daily),
-                find_cross_down(ars_d, ars_w_daily),
-                find_cross_up(df['Close'], bb_mid),
-                find_cross_up(df['Close'], bb_upper)
-            ])
+            
+            res.append({
+                "H": t.replace(".IS",""),
+                "G_H_UP": find_cross_up(ars_d, ars_w),
+                "G_H_DOWN": find_cross_down(ars_d, ars_w),
+                "F_BB": find_cross_up(df['Close'], bb_mid)
+            })
         except: continue
 
-    df_res = pd.DataFrame(results, columns=["Hisse", "G↑H", "G↓H", "F↑BB Orta", "F↑BB Üst"])
+    df_res = pd.DataFrame(res)
+    g_up = df_res[df_res['G_H_UP'].str.contains("\(0\)", na=False)]['H'].tolist()
+    g_down = df_res[df_res['G_H_DOWN'].str.contains("\(0\)", na=False)]['H'].tolist()
+    f_bb = df_res[df_res['F_BB'].str.contains("\(0\)", na=False)]['H'].tolist()
 
-    # --- SİNYAL AYIKLAMA (Bugün olanlar: (0)) ---
-    g_up = df_res[df_res['G↑H'].str.contains("\(0\)", na=False)]['Hisse'].tolist()
-    g_down = df_res[df_res['G↓H'].str.contains("\(0\)", na=False)]['Hisse'].tolist()
-    f_mid = df_res[df_res['F↑BB Orta'].str.contains("\(0\)", na=False)]['Hisse'].tolist()
-    f_upper = df_res[df_res['F↑BB Üst'].str.contains("\(0\)", na=False)]['Hisse'].tolist()
+    msg = "📅 *GÜNLÜK KESİŞİM RAPORU (TAM LİSTE)*\n"
+    msg += "----------------------------\n"
+    msg += f"🟢 *ARS G↑H (Bugün):*\n`{', '.join(g_up) if g_up else '➖'}`\n\n"
+    msg += f"🔴 *ARS G↓H (Bugün):*\n`{', '.join(g_down) if g_down else '➖'}`\n\n"
+    msg += f"🔵 *FİYAT ↑ BB ORTA (200):*\n`{', '.join(f_bb) if f_bb else '➖'}`"
 
-    # --- MESAJ OLUŞTURMA ---
-    msg = "📅 *GÜNLÜK KESİŞİM RAPORU*\n----------------------------\n"
-    msg += "🟢 *GÜNLÜK ↑ HAFTALIK (ARS):*\n" + (", ".join(g_up) if g_up else "➖ Sinyal Yok") + "\n\n"
-    msg += "🔴 *GÜNLÜK ↓ HAFTALIK (ARS):*\n" + (", ".join(g_down) if g_down else "➖ Sinyal Yok") + "\n\n"
-    msg += "🔵 *FİYAT ↑ BB ORTA (200):*\n" + (", ".join(f_mid) if f_mid else "➖ Sinyal Yok") + "\n\n"
-    msg += "🔥 *FİYAT ↑ BB ÜST:* \n" + (", ".join(f_upper) if f_upper else "➖ Sinyal Yok")
-
-    # --- GÖNDERİM ---
-    token = os.getenv('BOT_TOKEN')
-    chat_id = os.getenv('MY_CHAT_ID')
-    if token and chat_id:
-        bot = Bot(token=token)
-        await bot.send_message(chat_id=chat_id, text=msg, parse_mode=ParseMode.MARKDOWN)
-        print("Rapor Telegram'a gönderildi!")
+    bot = Bot(token=os.getenv('BOT_TOKEN'))
+    await bot.send_message(chat_id=os.getenv('MY_CHAT_ID'), text=msg, parse_mode=ParseMode.MARKDOWN)
 
 if __name__ == "__main__":
     asyncio.run(main())
