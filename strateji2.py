@@ -67,7 +67,7 @@ async def main():
                         found_stocks.append(create_link(ticker.replace(".IS","")))
         except: continue
 
-    msg = "💎 *PRKAB TİPİ DÖNÜŞ TARAMASI*\n"
+    msg = "💎 *DÖNÜŞ TARAMASI*\n"
     msg += "----------------------------\n"
     msg += f"🚀 *Sinyal Verenler:*\n{', '.join(found_stocks) if found_stocks else '➖ (Bugün sinyal yok)'}\n\n"
     msg += "📝 *Kısaca:* Kırılım → sert düşüş → yeniden toparlanma formasyonu.\n"
