@@ -1,26 +1,42 @@
-name: Gunluk Tarama
+name: BIST Taramalari
+
 on:
   schedule:
-    - cron: '0 16 * * *' # TSİ 19:00 (UTC 16:00)
-  workflow_dispatch: # Manuel çalıştırma butonu ekler
+    - cron: '0 16 * * *' # Birinci tarama (TSİ 19:00)
+    - cron: '0 17 * * *' # PRKAB Tipi Dönüş (TSİ 20:00)
+  workflow_dispatch:
 
 jobs:
-  run_scanner:
+  tarama_ars:
     runs-on: ubuntu-latest
+    if: github.event.schedule == '0 16 * * *' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Kodu Cek
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
       - name: Python Kur
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
-      - name: Kutuphaneleri Yukle
-        run: pip install yfinance pandas numpy python-telegram-bot
-
-      - name: Analizi Baslat
+      - name: Yukle ve Calistir
+        run: |
+          pip install yfinance pandas numpy python-telegram-bot
+          python main.py
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
-        run: python main.py
+
+  tarama_prkab:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Python Kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Yukle ve Calistir
+        run: |
+          pip install yfinance pandas numpy python-telegram-bot
+          python strateji2.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
