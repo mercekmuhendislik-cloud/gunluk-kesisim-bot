@@ -2,12 +2,13 @@ name: BIST Taramalari
 
 on:
   schedule:
-    - cron: '0 16 * * *' # Birinci tarama (TSİ 19:00)
-    - cron: '0 17 * * *' # PRKAB Tipi Dönüş (TSİ 20:00)
+    - cron: '0 16 * * *' # 1. Tarama (TSİ 19:00)
+    - cron: '0 17 * * *' # 2. Tarama (TSİ 20:00)
+    - cron: '0 18 * * *' # 3. Tarama (TSİ 21:00)
   workflow_dispatch:
 
 jobs:
-  tarama_ars:
+  tarama_bir:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 16 * * *' || github.event_name == 'workflow_dispatch'
     steps:
@@ -16,7 +17,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Yukle ve Calistir
+      - name: Calistir
         run: |
           pip install yfinance pandas numpy python-telegram-bot
           python main.py
@@ -24,7 +25,7 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
 
-  tarama_prkab:
+  tarama_iki:
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
     steps:
@@ -33,10 +34,27 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Yukle ve Calistir
+      - name: Calistir
         run: |
           pip install yfinance pandas numpy python-telegram-bot
           python strateji2.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
+
+  tarama_uc:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Python Kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Calistir
+        run: |
+          pip install yfinance pandas numpy python-telegram-bot
+          python strateji3.py
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           MY_CHAT_ID: ${{ secrets.MY_CHAT_ID }}
