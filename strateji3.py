@@ -74,7 +74,7 @@ async def main():
                 results.append(f"{create_link(ticker.replace('.IS',''))} ({' + '.join(onay)})")
         except: continue
 
-    msg = "🎯 *ARS MULTI-TIMEFRAME (YENİ KESİŞİM)*\n"
+    msg = "🎯 *MULTI-TIMEFRAME (YENİ KESİŞİM)*\n"
     msg += "----------------------------\n"
     msg += f"🔥 *Bugün Kesişenler:*\n{', '.join(results) if results else '➖ (Bugün yeni kesişim yok)'}\n\n"
     msg += "📝 *Kısaca:* Günlük ARS'nin Haftalık veya Aylık ARS'yi bugün yukarı kestiği taze setup.\n"
