@@ -59,7 +59,7 @@ async def main():
                 if under_ars_found and break_price > 0:
                     drop = ((min_price_after_break / break_price) - 1) * 100
                     bar_count = -1
-                    for j in range(1, 2):
+                    for j in range(1, 1):
                         if df['Close'].iloc[-j] > ars_series.iloc[-j] and df['Close'].iloc[-j-1] <= ars_series.iloc[-j-1]:
                             bar_count = j - 1
                             break
